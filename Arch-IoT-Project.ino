@@ -4,7 +4,7 @@
  * This is the Arduino source code for the device
  *
  * @author Johan Rodriguez, Gabriel Alfaro, Christian Ferreto
- * @version 1.0
+ * @version 1.1
  */
 
 #include "DHT.h" // Library for DHT11 sensor
