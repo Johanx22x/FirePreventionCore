@@ -8,12 +8,16 @@
  */
 
 #include "DHT.h" // Library for DHT11 sensor
+#include <SoftwareSerial.h> // Library for bluetooth module
 
 #define DHTPIN 7 // Digital pin connected to the DHT sensor
 #define DHTTYPE DHT11 // DHT 11
 #define MQ2pin (0) // Define which analog input channel to be used for the MQ2 sensor
+#define RX 5
+#define TX 4
 
 DHT dht(DHTPIN, DHTTYPE); // Initialize DHT sensor for normal 16mhz Arduino
+SoftwareSerial hc06(TX,RX);
 
 /**
  * Struct to store the data of the sensors
@@ -38,9 +42,8 @@ sensorData getSensorData() {
 }
 
 void setup() {
-  Serial.begin(9600); // Initialize serial communication
-
   dht.begin(); // initialize the DHT sensor
+  hc06.begin(9600); //Initialize Bluetooth Serial Port
 }
 
 void loop() {
@@ -59,48 +62,50 @@ void loop() {
   for (int i = 0; i < 100; i++) {
     data = getSensorData();
 
+    if (i == 50) {
+      hc06.print("A: Test alert$");  
+    }
+
     if (data.MQ2 == isnan(data.MQ2) && !gasError) {
-      Serial.println("Failed to read from MQ2 sensor!");
+      hc06.print("E: Gas sensor is not working$");
       gasError = true;
       continue;
     }
 
     if (data.temperature == isnan(data.temperature) && !temperatureError) {
-      Serial.println("failed to read from DHT sensor!");
+      hc06.print("E: Temperature sensor is not working$");
       temperatureError = true;
       continue;
     }
 
     if (data.humidity == isnan(data.humidity) && !humidityError) {
-      Serial.println("Failed to read from DHT sensor!");
+      hc06.print("E: Humidity sensor is not working$");
       humidityError = true;
       continue;
     }
 
     if (!temperatureAlert && data.temperature > 30) {
-      Serial.println("Temperature is too high");
+      hc06.print("A: Temperature is too high$");
       temperatureAlert = true;
     }
 
-    if (!humidityAlert && data.humidity > 70) {
-      Serial.println("Humidity is too high");
+    if (!humidityAlert && data.humidity < 45) {
+      hc06.print("A: Humidity is too low$");
       humidityAlert = true;
     }
 
     if (!gasAlert && data.MQ2 > 150) {
-      Serial.println("Gas is too high");
+      hc06.print("A: Gas is too high$");
       gasAlert = true;
     }
 
     delay(100);
   }
 
-  Serial.println();
-  Serial.println("Temperature: " + String(data.temperature) + " C");
-  Serial.println("Humidity: " + String(data.humidity) + " %");
-  Serial.println("MQ2: " + String(data.MQ2) + " ppm");
-
-  // TODO: Send data
+  // Send data 
+  hc06.print("T: " + String(data.temperature) + ";");
+  hc06.print("H: " + String(data.humidity) + ";");
+  hc06.print("G: " + String(data.MQ2) + "$");
 
   temperatureAlert = false;
   humidityAlert = false;
